@@ -11,17 +11,30 @@
   </head>
   <body>
     <header id="topbar">
-      <h1><a href="./">Field Report Card</a></h1>
-      <p>Whitman County, Washington</p>
+      <a class="brand" href="./">
+        <svg viewBox="0 0 26 18" aria-hidden="true">
+          <rect class="wk-green" x="0" y="0" width="5" height="18" rx="1.5" />
+          <rect class="wk-bare" x="7" y="0" width="5" height="18" rx="1.5" />
+          <rect class="wk-exposed" x="14" y="0" width="5" height="18" rx="1.5" />
+          <rect class="wk-green" x="21" y="0" width="5" height="18" rx="1.5" />
+        </svg>
+        <span>Field Report Card</span>
+      </a>
+      <p id="region"></p>
       <nav>
-        <label class="toggle"><input type="checkbox" id="aerial" /> Aerial photo</label>
-        <a href="./methods.html">How it works</a>
+        <label class="switch"><input type="checkbox" id="aerial" /><span></span>Aerial photo</label>
+        <a class="button button-quiet" href="./methods.html">How it works</a>
       </nav>
     </header>
     <div id="map"></div>
+    <div id="legend" hidden></div>
     <aside id="card" aria-live="polite">
-      <h2>Loading the fields</h2>
-      <p>Reading grades for the study area.</p>
+      <div class="skeleton" aria-label="Loading the fields">
+        <div class="sk sk-title"></div>
+        <div class="sk sk-line"></div>
+        <div class="sk sk-line short"></div>
+        <div class="sk sk-block"></div>
+      </div>
     </aside>
     <script type="module" src="/src/main.ts"></script>
   </body>

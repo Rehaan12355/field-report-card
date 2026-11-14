@@ -36,7 +36,7 @@ export function sliders(p: Priorities): string {
 function effectCell(e: Effect): string {
   const word = e.effect === null ? "Not known" : EFFECT_WORDS[String(e.effect)];
   const cls = e.effect === null ? "is-unknown" : e.effect > 0 ? "is-better" : e.effect < 0 ? "is-worse" : "";
-  return `<td class="${cls}">${word}<small>${e.note}</small></td>`;
+  return `<td class="fx ${cls}">${word}<small>${e.note}</small></td>`;
 }
 
 const round = (x: number) => Math.round(x);
@@ -47,7 +47,7 @@ export function planTable(plans: Plan[], selected: string, p: Priorities): strin
   const head = cols
     .map(
       (plan, i) => `<th scope="col" class="${plan.key === selected ? "is-selected" : ""}">
-        ${i === 0 ? `<span class="best">Best match</span>` : ""}
+        ${i === 0 ? `<span class="best">Best match for your priorities</span>` : ""}
         <button type="button" data-plan="${plan.key}" aria-pressed="${plan.key === selected}">${plan.title}</button>
       </th>`,
     )

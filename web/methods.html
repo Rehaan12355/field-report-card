@@ -7,9 +7,17 @@
   </head>
   <body class="page">
     <header id="topbar">
-      <h1><a href="./">Field Report Card</a></h1>
-      <p>How it works</p>
-      <nav><a href="./">Back to the map</a></nav>
+      <a class="brand" href="./">
+        <svg viewBox="0 0 26 18" aria-hidden="true">
+          <rect class="wk-green" x="0" y="0" width="5" height="18" rx="1.5" />
+          <rect class="wk-bare" x="7" y="0" width="5" height="18" rx="1.5" />
+          <rect class="wk-exposed" x="14" y="0" width="5" height="18" rx="1.5" />
+          <rect class="wk-green" x="21" y="0" width="5" height="18" rx="1.5" />
+        </svg>
+        <span>Field Report Card</span>
+      </a>
+      <p id="region">How it works</p>
+      <nav><a class="button button-quiet" href="./">Back to the map</a></nav>
     </header>
     <main id="methods"><p>Loading the method and check results.</p></main>
     <script type="module" src="/src/methods.ts"></script>

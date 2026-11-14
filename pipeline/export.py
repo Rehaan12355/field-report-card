@@ -174,6 +174,7 @@ def write(fields, history, ndvi, snow, heavy, rain, rain_threshold, trend, class
     ha = fields.ha.values
     meta = {
         "generated": date.today().isoformat(),
+        "region": getattr(config, "REGION_NAME", "the Colfax to Pullman area of Whitman County, Washington"),
         "box": list(config.STUDY_BOX),
         "years": years,
         "fields": len(fields),
