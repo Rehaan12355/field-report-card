@@ -3,25 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Click a farm field to see its crop history, bare-soil weeks and heavy-rain risk, read from NASA satellite data."
+    />
     <title>Field Report Card</title>
   </head>
   <body>
     <header id="topbar">
-      <h1>Field Report Card</h1>
+      <h1><a href="./">Field Report Card</a></h1>
       <p>Whitman County, Washington</p>
+      <nav>
+        <label class="toggle"><input type="checkbox" id="aerial" /> Aerial photo</label>
+        <a href="./methods.html">How it works</a>
+      </nav>
     </header>
     <div id="map"></div>
     <aside id="card" aria-live="polite">
-      <h2>Field outlines are on the way</h2>
-      <p>
-        This map will show farm fields between Colfax and Pullman. Click one to
-        see its crop history, how many weeks a year its soil sits bare, and its
-        grade.
-      </p>
-      <p class="note">
-        Readings come from NASA satellites and USDA crop maps. The grade is a
-        screening tool, not a soil test.
-      </p>
+      <h2>Loading the fields</h2>
+      <p>Reading grades for the study area.</p>
     </aside>
     <script type="module" src="/src/main.ts"></script>
   </body>

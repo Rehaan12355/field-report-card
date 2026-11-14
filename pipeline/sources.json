@@ -1,0 +1,82 @@
+{
+ "note": "Statements about farming practice used in plan text. Table values from PDFs were read by text extraction and should be checked against the PDF by the team's data checker.",
+ "sources": {
+  "em108": {
+   "title": "Kirby et al. (2017), Rotational Diversification and Intensification, ch. 5 of Advances in Dryland Farming in the Inland Pacific Northwest, WSU Extension EM108",
+   "url": "https://wpcdn.web.wsu.edu/wp-ecommerce/uploads/sites/2/em108-ch5.pdf"
+  },
+  "cover_water": {
+   "title": "Kahl, Boone and Brooks (2022), WSU Wheat and Small Grains: cover crop trial results",
+   "url": "https://smallgrains.wsu.edu/?p=991860"
+  },
+  "cover_review": {
+   "title": "McGuire (2023), WSU CSANR, on water use limits of cover crops, citing Garba et al. 2022",
+   "url": "https://csanr.wsu.edu/wateruselimitationscovercrops/"
+  },
+  "steep": {
+   "title": "STEEP Impact Report (2007), Washington State University",
+   "url": "https://webarchive.library.unt.edu/eot2008/20090116221619/http:/pnwsteep.wsu.edu/STEEP_impact_report_2007.pdf"
+  },
+  "handbook628": {
+   "title": "USDA NASS (2010), Field Crops Usual Planting and Harvesting Dates, Agricultural Handbook 628",
+   "url": "https://esmis.nal.usda.gov/usda-esmis/files/vm40xr56k/dv13zw65p/w9505297d/planting-10-29-2010.pdf"
+  },
+  "cdl_accuracy": {
+   "title": "USDA NASS, 2023 Washington Cropland Data Layer metadata and accuracy tables",
+   "url": "https://www.nass.usda.gov/sites/default/files/Research_and_Science/Cropland/metadata/metadata_wa23.htm"
+  }
+ },
+ "text": {
+  "cover_risk": "Cover crops use soil water. WSU trials saw winter wheat yield about 20% less after forage cover crops in a dry spring and no difference in a wet one, and a review of temperate drylands found an average 11% drop.",
+  "cover_water": {
+   "effect": -1,
+   "note": "Uses soil water the next crop may need."
+  },
+  "cover_income": {
+   "effect": -1,
+   "note": "Seed, planting and termination costs, with no immediate cash return."
+  },
+  "rotation_benefit": "WSU reports wheat after peas or lentils can yield 10 to 20% more than in a wheat-fallow rotation, and pulses help with grass weeds and disease.",
+  "rotation_risk": "Markets, equipment and disease history for the new crop are not in our data.",
+  "rotation_water_fallow": {
+   "effect": -1,
+   "note": "Any crop draws on water a fallow year leaves in the soil; WSU rates grain legumes as moderate users."
+  },
+  "rotation_income_fallow": {
+   "effect": 1,
+   "note": "Adds a harvest in a year that had none."
+  },
+  "rotation_income": {
+   "effect": 0,
+   "note": "Depends on prices and yields, which are not in our data."
+  },
+  "rotation_water_fallow_other": {
+   "effect": -1,
+   "note": "Any crop draws on water a fallow year leaves in the soil."
+  }
+ },
+ "cdl_accuracy_wa_2023": {
+  "overall_fsa_crops": 0.888,
+  "kappa": 0.863,
+  "producer": {
+   "Winter Wheat": 0.956,
+   "Spring Wheat": 0.864,
+   "Barley": 0.627,
+   "Canola": 0.863,
+   "Alfalfa": 0.857,
+   "Chick Peas": 0.887,
+   "Lentils": 0.844,
+   "Peas": 0.738
+  },
+  "user": {
+   "Winter Wheat": 0.948,
+   "Spring Wheat": 0.884,
+   "Barley": 0.82,
+   "Canola": 0.934,
+   "Alfalfa": 0.849,
+   "Chick Peas": 0.909,
+   "Lentils": 0.829,
+   "Peas": 0.868
+  }
+ }
+}

@@ -7,5 +7,4 @@ shapely
 scipy
 earthaccess
 requests
-python-dotenv
 pytest

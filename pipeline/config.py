@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = ROOT / "data" / "raw"
+WORK_DIR = ROOT / "data" / "work"
 WEB_DATA_DIR = ROOT / "web" / "public" / "data"
 
 # Map centre for the demo county (Whitman County, Washington): lon, lat.
@@ -25,6 +26,8 @@ MAX_GAP_WEEKS = 3
 # gives "likely green". Otherwise the weeks stay unknown. Likely weeks are
 # always reported separately from weeks actually seen.
 BRIDGE_AGREEING_GAPS = True
+# Gaps longer than this are never bridged, even when both ends agree.
+MAX_BRIDGE_WEEKS = 16
 
 # A week is heavy rain when its total is in the top share of weeks since 1991.
 HEAVY_RAIN_TOP_SHARE = 0.10
@@ -35,5 +38,27 @@ HOT_DAY_C = 32.0
 GRADE_WEIGHTS = {"bare": 40, "exposed": 30, "variety": 30}
 GRADE_CUTOFFS = {"A": 80, "B": 65, "C": 50, "D": 35}
 
+# Crop variety part of the grade: 1 crop scores 0, VARIETY_FULL_CROPS or more
+# scores full marks; a legume or perennial in the history adds the bonus.
+VARIETY_FULL_CROPS = 4
+VARIETY_CROP_WEIGHT = 0.75
+VARIETY_BONUS = 0.25
+
 MIN_FIELD_HECTARES = 5
+# Fields are groups of touching pixels that grew the same crops in each of
+# these years. Using three years splits neighbours that share one year's crop.
+FIELD_YEARS = (2023, 2024, 2025)
+# CDL patches smaller than this many pixels are treated as speckle.
+CDL_SPECKLE_PIXELS = 6
+# A year's crop must cover at least this share of the field, else "mixed".
+MIN_CROP_SHARE = 0.5
+# A field is left off the map when the satellites saw it clearly in fewer than
+# this share of weeks: too little to grade.
+MIN_SEEN_SHARE = 0.25
+# Field outlines are pulled in by this much before sampling satellite pixels,
+# so pixels that straddle a field edge are left out.
+FIELD_EDGE_BUFFER_M = 15
 COVER_CROP_LAG_WEEKS = 3
+# A crop needs this many field-years in the box before we trust its typical
+# weekly pattern.
+MIN_PROFILE_FIELD_YEARS = 15

@@ -1,1 +1,9 @@
 crop,cdl_code,plant_week,harvest_week,water_need,nitrogen_fixing,perennial,source
+Winter Wheat,24,37,31,high,no,no,"Weeks: USDA NASS Agricultural Handbook 628 (2010), Washington, midpoint of most-active dates (planting Sep 1 to Oct 10, harvest Jul 25 to Aug 20). Water: WSU EM108 ch. 5, Table 5-A3, top tier of relative water use."
+Spring Wheat,23,14,32,medium,no,no,"Weeks: USDA NASS Handbook 628, Washington (planting Mar 25 to Apr 30, harvest Aug 1 to Aug 30). Water: WSU EM108 ch. 5, Table 5-A3, 'spring cereal', third of five tiers."
+Barley,21,15,32,medium,no,no,"Weeks: USDA NASS Handbook 628, Washington, spring barley (planting Mar 30 to May 5, harvest Aug 1 to Aug 30). Water: WSU EM108 ch. 5, Table 5-A3, 'spring cereal'."
+Chick Peas,51,,,medium,yes,no,"Weeks: not listed for Washington in Handbook 628. Water: WSU EM108 ch. 5, Table 5-A3, second of five tiers. Nitrogen: WSU EM108 ch. 5, grain legumes."
+Lentils,52,,,low,yes,no,"Weeks: not listed for Washington in Handbook 628. Water: WSU EM108 ch. 5, Table 5-A3, fourth of five tiers. Nitrogen: WSU EM108 ch. 5, grain legumes."
+Peas,53,16,30,low,yes,no,"Weeks: USDA NASS Handbook 628, Washington, dry edible peas (planting Apr 10 to May 15, harvest Jul 20 to Aug 20). Water: WSU EM108 ch. 5, Table 5-A3, lowest tier. Nitrogen: WSU EM108 ch. 5, grain legumes."
+Canola,31,,,medium,no,no,"Weeks: not listed for Washington in Handbook 628. Water: WSU EM108 ch. 5, Table 5-A3; CDL does not separate spring canola (third tier) from winter canola (top tier), so the spring class is used."
+Alfalfa,36,,,high,yes,yes,"Water: Montana State University Extension, 'Irrigating Alfalfa: Some Guidelines' (irrigated context). Nitrogen: PNW 611. Perennial: Oregon State University Extension (2019)."

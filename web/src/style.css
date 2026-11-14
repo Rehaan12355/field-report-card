@@ -29,7 +29,7 @@
   --text-grade: 3.815rem;
 
   --bar-height: 52px;
-  --panel-width: 400px;
+  --panel-width: 480px;
 }
 
 html,
@@ -141,4 +141,555 @@ h3 {
   #topbar {
     padding: 0 16px;
   }
+}
+
+/* ---------- Top bar ---------- */
+
+#topbar a {
+  color: inherit;
+  text-decoration: none;
+}
+
+#topbar nav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: var(--text-s);
+}
+
+#topbar nav a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.toggle input {
+  accent-color: var(--wheat);
+}
+
+/* ---------- Report card ---------- */
+
+#card section {
+  margin-top: 28px;
+}
+
+#card h3 {
+  font-size: var(--text-l);
+  margin-bottom: 10px;
+}
+
+#card a {
+  color: var(--ink);
+}
+
+.grade-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.grade-block {
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-grade);
+  line-height: 1;
+  color: #fff;
+  transition: background-color 0.4s;
+}
+
+.grade-A { background: var(--grade-a); }
+.grade-B { background: var(--grade-b); }
+.grade-C { background: var(--grade-c); }
+.grade-D { background: var(--grade-d); }
+.grade-F { background: var(--grade-f); }
+.grade-block.grade-B,
+.grade-block.grade-C,
+.grade-chip.grade-B,
+.grade-chip.grade-C {
+  color: var(--ink);
+}
+
+.grade-head h2 {
+  margin-bottom: 4px;
+}
+
+#card .reason {
+  margin-bottom: 4px;
+}
+
+.grade-chip {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6em;
+  height: 1.6em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: #fff;
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-size: var(--text-l);
+  line-height: 1.3;
+  padding: 14px 16px;
+  background: var(--paper);
+  border-left: 6px solid var(--washout);
+}
+
+.headline b {
+  font-size: var(--text-xl);
+  color: var(--washout);
+}
+
+.grade-bars {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.grade-bars li {
+  display: grid;
+  grid-template-columns: auto 1fr 3ch;
+  gap: 10px;
+  align-items: center;
+  font-size: var(--text-s);
+}
+
+.bar {
+  background: var(--paper);
+  height: 14px;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+}
+
+/* ---------- Week ribbon ---------- */
+
+.ribbon {
+  display: grid;
+  gap: 3px;
+}
+
+.ribbon-row {
+  display: grid;
+  grid-template-columns: 4ch 12.5ch minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  font-size: var(--text-s);
+}
+
+.ribbon-row svg {
+  width: 100%;
+  height: 22px;
+  display: block;
+}
+
+.ribbon-months svg {
+  height: 12px;
+}
+
+.ribbon-months text {
+  font-size: 9px;
+  fill: var(--ink-soft);
+}
+
+.ribbon-year {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ribbon-crop {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.ribbon-crop i {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(28, 43, 34, 0.35);
+}
+
+.ribbon-row.is-swapped .ribbon-crop {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--wheat);
+  text-decoration-thickness: 3px;
+}
+
+.ribbon rect,
+.key rect {
+  transition: fill 0.4s;
+}
+
+.wk-green { fill: var(--canopy); }
+.wk-green-likely { fill: url(#hatch-green); }
+.wk-bare { fill: var(--soil); }
+.wk-bare-likely { fill: url(#hatch-bare); }
+.wk-exposed { fill: var(--washout); }
+.wk-exposed-likely { fill: url(#hatch-exposed); }
+.wk-cover { fill: #8fc9a8; }
+.wk-snow { fill: #dfe9f2; }
+.wk-unknown { fill: url(#hatch-unknown); }
+.wk-rain { fill: var(--rain); }
+
+.hatch-ground { fill: var(--paper-raised); }
+.hatch-bare { fill: var(--soil); }
+.hatch-green { fill: var(--canopy); }
+.hatch-exposed { fill: var(--washout); }
+.hatch-unknown { fill: #c3c9c0; }
+
+.key {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: var(--text-s);
+  color: var(--ink-soft);
+}
+
+.key li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.key svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ---------- Plans ---------- */
+
+.sliders {
+  border: 0;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.sliders legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: var(--text-s);
+  color: var(--ink-soft);
+}
+
+.slider {
+  display: grid;
+  gap: 2px;
+  font-size: var(--text-s);
+  font-weight: 600;
+}
+
+.slider input {
+  width: 100%;
+  accent-color: var(--ink);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--text-s);
+}
+
+.plans th,
+.plans td {
+  padding: 8px 8px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+
+.plans tbody th {
+  font-weight: 400;
+  color: var(--ink-soft);
+  width: 22%;
+}
+
+.plans thead th {
+  vertical-align: bottom;
+  width: 26%;
+}
+
+.plans td {
+  font-size: var(--text-m);
+  font-variant-numeric: tabular-nums;
+}
+
+.plans td small {
+  display: block;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
+.plans td.is-better { color: var(--canopy); font-weight: 600; }
+.plans td.is-worse { color: var(--washout); font-weight: 600; }
+.plans td.is-unknown { color: var(--ink-soft); }
+
+.plans .is-selected {
+  background: #fbf3d9;
+}
+
+.plans thead .is-selected {
+  box-shadow: inset 0 4px 0 var(--wheat);
+}
+
+.plans button {
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.plans button[aria-pressed="true"] {
+  text-decoration: none;
+}
+
+.best {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 2px;
+}
+
+.plan-detail {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--paper);
+}
+
+#card .plan-detail h3 {
+  font-size: var(--text-m);
+}
+
+.plan-detail dl {
+  margin: 0;
+  font-size: var(--text-s);
+}
+
+.plan-detail dt {
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.plan-detail dd {
+  margin: 0;
+}
+
+.cites {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  font-size: var(--text-s);
+}
+
+#card .note {
+  margin: 10px 0 0;
+}
+
+#card .review {
+  margin: 12px 0 0;
+  font-size: var(--text-s);
+  font-weight: 700;
+}
+
+/* ---------- Greenness curve and small tables ---------- */
+
+.curve {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--paper);
+}
+
+.curve text {
+  font-size: 9px;
+  fill: var(--ink-soft);
+}
+
+.curve-bare { fill: var(--soil); opacity: 0.18; }
+.curve-grid { stroke: var(--line); stroke-width: 1; }
+.curve-threshold { stroke: var(--soil); stroke-width: 1; stroke-dasharray: 4 3; }
+.curve-line { fill: none; stroke: var(--canopy); stroke-width: 1.4; }
+.curve-dots circle { fill: var(--canopy); }
+
+.climate th,
+.climate td {
+  padding: 6px 8px 6px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+
+.climate thead th {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.climate tbody th {
+  font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ribbon rect,
+  .grade-block {
+    transition: none;
+  }
+}
+
+@media (max-width: 760px) {
+  #topbar p {
+    display: none;
+  }
+
+  .sliders {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Methods page ---------- */
+
+body.page {
+  display: block;
+  height: auto;
+}
+
+body.page #topbar {
+  height: var(--bar-height);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+#methods {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+#methods h2 {
+  font-size: 1.953rem;
+  margin-bottom: 12px;
+}
+
+#methods h3 {
+  font-size: var(--text-xl);
+  margin: 40px 0 10px;
+}
+
+#methods h4 {
+  font-family: var(--font-text);
+  font-size: var(--text-m);
+  font-weight: 700;
+  margin: 24px 0 6px;
+}
+
+#methods p,
+#methods li {
+  max-width: 68ch;
+}
+
+#methods a {
+  color: var(--ink);
+}
+
+.lede {
+  font-size: var(--text-l);
+  line-height: 1.45;
+}
+
+#methods table {
+  margin: 12px 0;
+}
+
+#methods caption {
+  text-align: left;
+  font-size: var(--text-s);
+  color: var(--ink-soft);
+  padding-bottom: 6px;
+}
+
+#methods .climate td,
+#methods .climate th {
+  vertical-align: top;
+}
+
+.looks td.is-low {
+  color: var(--washout);
+  font-weight: 700;
+}
+
+table.narrow {
+  width: auto;
+}
+
+table.narrow td,
+table.narrow th {
+  padding-right: 28px;
+}
+
+.minis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.mini {
+  margin: 0;
+}
+
+.mini svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--paper-raised);
+}
+
+.mini figcaption {
+  font-size: var(--text-s);
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+
+.mini figcaption b {
+  color: var(--ink);
 }

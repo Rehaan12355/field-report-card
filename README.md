@@ -9,12 +9,10 @@ Built for the NASA Space Apps Challenge 2026 (Seattle), challenge
 
 **Live site:** https://rehaan12355.github.io/field-report-card/
 
-> Status: early build. The map loads; field data is not in yet.
-
 ## How it works
 
 A Python pipeline runs on a laptop over one study box in Whitman County,
-Washington, and writes small JSON and GeoJSON files. A static web map loads
+Washington (591 fields, 2019 to 2025), and writes small JSON and GeoJSON files. A static web map loads
 them. Nothing runs on a server.
 
 - **NASA HLS** (Harmonized Landsat and Sentinel-2) vegetation indices: weekly greenness per field
@@ -22,7 +20,8 @@ them. Nothing runs on a server.
 - **USDA Cropland Data Layer**: the crop grown each year
 - **USDA soil survey (SSURGO)**: soil properties
 
-See [docs/methods.md](docs/methods.md) for the science and
+See the [methods page](https://rehaan12355.github.io/field-report-card/methods.html)
+or [docs/methods.md](docs/methods.md) for the science and check results, and
 [DATA_SOURCES.md](DATA_SOURCES.md) for every dataset.
 
 The grade is a screening tool, not a soil test. Check any plan with your local
@@ -37,7 +36,8 @@ make setup   # Python virtual environment and web dependencies
 make test    # pipeline tests
 make web     # local map at http://localhost:5173
 make build   # production build in web/dist
-make data    # run the pipeline (needs a NASA Earthdata login, see .env.example)
+make data    # download inputs and run the pipeline (about 13 GB; needs a NASA
+             # Earthdata login in ~/.netrc)
 ```
 
 ## AI use
