@@ -51,6 +51,7 @@ export type Measure = { normal: number; recent: number };
 
 export type Meta = {
   generated: string;
+  region?: string;
   box: [number, number, number, number];
   years: number[];
   fields: number;

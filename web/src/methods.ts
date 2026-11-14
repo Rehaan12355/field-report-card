@@ -1,5 +1,5 @@
-import "@fontsource-variable/bitter";
-import "@fontsource-variable/public-sans";
+import "@fontsource-variable/geist";
+import "@fontsource-variable/geist-mono";
 import "./style.css";
 import type { Meta } from "./types";
 
@@ -97,15 +97,15 @@ function render(meta: Meta, v: Validation): string {
     States; this demo runs it on one study area of about 20 by 20 km.</p>
 
   <h3>The data</h3>
-  <table class="climate">
+  <table class="facts">
     <tbody>
-      <tr><th scope="row">NASA HLS</th><td>Harmonized Landsat and Sentinel-2 vegetation indices (HLSL30_VI and
+      <tr><th scope="row">NASA HLS</th><td class="words">Harmonized Landsat and Sentinel-2 vegetation indices (HLSL30_VI and
         HLSS30_VI, version 2.0) from NASA's LP DAAC: greenness (NDVI) and a cloud mask at 30 m, every few days.
         Landsat is a NASA and USGS mission; Sentinel-2 is from the European Space Agency.</td></tr>
-      <tr><th scope="row">NASA POWER</th><td>Daily rain and temperature since 1991, on a grid of about 50 km.
+      <tr><th scope="row">NASA POWER</th><td class="words">Daily rain and temperature since 1991, on a grid of about 50 km.
         One grid cell covers the whole study area.</td></tr>
-      <tr><th scope="row">USDA Cropland Data Layer</th><td>The crop grown on each 30 m pixel, each year.</td></tr>
-      <tr><th scope="row">USDA soil survey</th><td>SSURGO soil properties, read at the centre of each field.</td></tr>
+      <tr><th scope="row">USDA Cropland Data Layer</th><td class="words">The crop grown on each 30 m pixel, each year.</td></tr>
+      <tr><th scope="row">USDA soil survey</th><td class="words">SSURGO soil properties, read at the centre of each field.</td></tr>
     </tbody>
   </table>
 
@@ -125,7 +125,7 @@ function render(meta: Meta, v: Validation): string {
     "likely green". Anything else stays unknown. Snowy views never count as bare. Across all fields and weeks,
     ${pct(v.week_states.seen)} were seen, ${pct(v.week_states.likely)} are likely, ${pct(v.week_states.snow)} were
     snow and ${pct(v.week_states.unknown)} stayed unknown.</p>
-  <div class="table-scroll"><table class="climate looks">
+  <div class="table-scroll"><table class="facts looks">
     <caption>Satellite passes with at least half the fields in clear view, by month</caption>
     <thead><tr><td></td>${MONTHS.map((m) => `<th scope="col">${m}</th>`).join("")}</tr></thead>
     <tbody>${looks}</tbody>
@@ -176,7 +176,7 @@ function render(meta: Meta, v: Validation): string {
     about 0.19 to 0.25, right around the threshold, so moving it changes many weeks at once. We kept
     ${meta.ndvi_threshold} because it separates fallow from cropped fields; at 0.20 that gap nearly disappears.
     Treat grades as a ranking within this area, not an absolute measure.</p>
-  <div class="table-scroll"><table class="climate">
+  <div class="table-scroll"><table class="facts">
     <thead><tr><th scope="col">Threshold</th><th scope="col">Mean bare weeks</th><th scope="col">Fallow median</th>
       <th scope="col">Cropped median</th><th scope="col">Same grade</th><th scope="col">Moved one letter</th>
       <th scope="col">Moved two or more</th></tr></thead>
@@ -193,7 +193,7 @@ function render(meta: Meta, v: Validation): string {
       ? `<h4>How accurate are the crop maps?</h4>
   <p>USDA's own check for Washington in 2023 put the Cropland Data Layer at ${pct(acc.overall_fsa_crops)} overall
     for crops (kappa ${acc.kappa}). Source: ${src("cdl_accuracy")}.</p>
-  <table class="climate narrow"><thead><tr><td></td><th scope="col">Producer's accuracy</th><th scope="col">User's accuracy</th></tr></thead>
+  <table class="facts narrow"><thead><tr><td></td><th scope="col">Producer's accuracy</th><th scope="col">User's accuracy</th></tr></thead>
     <tbody>${accRows}</tbody></table>`
       : ""
   }

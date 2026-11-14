@@ -2,7 +2,6 @@ import * as maplibregl from "maplibre-gl";
 // The bundler does not pick up MapLibre's worker on its own, so bundle it
 // here and tell MapLibre where it ended up.
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
-import type { Meta } from "./types";
 
 maplibregl.setWorkerUrl(workerUrl);
 
@@ -14,16 +13,54 @@ const AERIAL_TILES = "https://basemap.nationalmap.gov/arcgis/rest/services/USGSI
 
 const GRADE_COLORS = ["A", "#1f7a3a", "B", "#7fb04a", "C", "#e0b93b", "D", "#d07a2a", "F", "#a8321f"];
 
-export function createMap(container: string, meta: Meta, onPick: (id: string | null) => void) {
-  const [w, s, e, n] = meta.box;
+export type FieldProps = { id: string; grade: string; ha: number; crop: string; bare: number; exposed: number };
+type FieldCollection = GeoJSON.FeatureCollection<GeoJSON.Polygon | GeoJSON.MultiPolygon, FieldProps>;
+
+function bboxOf(geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon): [number, number, number, number] {
+  let [w, s, e, n] = [180, 90, -180, -90];
+  const rings = geometry.type === "Polygon" ? geometry.coordinates : geometry.coordinates.flat();
+  for (const ring of rings)
+    for (const [x, y] of ring) {
+      w = Math.min(w, x);
+      e = Math.max(e, x);
+      s = Math.min(s, y);
+      n = Math.max(n, y);
+    }
+  return [w, s, e, n];
+}
+
+/** Room to leave for the report card, so the map never hides behind it. */
+function cardPadding() {
+  const card = document.getElementById("card") as HTMLElement;
+  const wide = window.matchMedia("(min-width: 768px)").matches;
+  return { top: 40, bottom: 40, left: 40, right: wide ? card.offsetWidth + 56 : 40 };
+}
+
+export function createMap(container: string, fields: FieldCollection, onPick: (id: string | null) => void) {
+  const boxes = new Map(fields.features.map((f) => [f.properties.id, bboxOf(f.geometry)]));
+  const home = fields.features.reduce<[number, number, number, number]>(
+    (b, f) => {
+      const [w, s, e, n] = boxes.get(f.properties.id)!;
+      return [Math.min(b[0], w), Math.min(b[1], s), Math.max(b[2], e), Math.max(b[3], n)];
+    },
+    [180, 90, -180, -90],
+  );
   const map = new maplibregl.Map({
     container,
     style: BASEMAP_STYLE,
-    bounds: [w, s, e, n],
-    fitBoundsOptions: { padding: 24 },
+    bounds: home,
+    fitBoundsOptions: { padding: cardPadding() },
   });
-  map.addControl(new maplibregl.NavigationControl(), "top-right");
-  map.addControl(new maplibregl.ScaleControl({ unit: "metric" }));
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-left");
+  map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left");
+
+  let filter: string | null = null;
+  let aerial = false;
+  const fillOpacity = () => {
+    const base = aerial ? 0.4 : 0.78;
+    const shown: unknown = filter ? ["case", ["==", ["get", "grade"], filter], base, 0.08] : base;
+    return ["case", ["boolean", ["feature-state", "hover"], false], 1, shown] as never;
+  };
 
   map.on("load", () => {
     map.addSource("aerial", {
@@ -34,68 +71,77 @@ export function createMap(container: string, meta: Meta, onPick: (id: string | n
       attribution: "Aerial imagery: USGS The National Map",
     });
     map.addLayer({ id: "aerial", type: "raster", source: "aerial", layout: { visibility: "none" } });
-    map.addSource("fields", { type: "geojson", data: "./data/fields.geojson", promoteId: "id" });
+    map.addSource("fields", { type: "geojson", data: fields, promoteId: "id" });
     map.addLayer({
       id: "fields-fill",
       type: "fill",
       source: "fields",
       paint: {
         "fill-color": ["match", ["get", "grade"], ...GRADE_COLORS, "#999999"] as never,
-        "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.72],
+        "fill-opacity": fillOpacity(),
       },
     });
     map.addLayer({
       id: "fields-line",
       type: "line",
       source: "fields",
+      paint: { "line-color": "#ffffff", "line-width": 0.6, "line-opacity": 0.7 },
+    });
+    // The selected field: a dark outline over a white halo, readable on any grade colour.
+    map.addLayer({
+      id: "selected-halo",
+      type: "line",
+      source: "fields",
       paint: {
-        "line-color": ["case", ["boolean", ["feature-state", "selected"], false], "#d9a521", "#1c2b22"],
-        "line-width": ["case", ["boolean", ["feature-state", "selected"], false], 4, 0.5],
-        "line-opacity": ["case", ["boolean", ["feature-state", "selected"], false], 1, 0.45],
+        "line-color": "#ffffff",
+        "line-width": 7,
+        "line-opacity": ["case", ["boolean", ["feature-state", "selected"], false], 1, 0],
       },
     });
     map.addLayer({
-      id: "study-box",
+      id: "selected-line",
       type: "line",
-      source: {
-        type: "geojson",
-        data: {
-          type: "Feature",
-          properties: {},
-          geometry: { type: "LineString", coordinates: [[w, s], [e, s], [e, n], [w, n], [w, s]] },
-        },
+      source: "fields",
+      paint: {
+        "line-color": "#18181b",
+        "line-width": 3,
+        "line-opacity": ["case", ["boolean", ["feature-state", "selected"], false], 1, 0],
       },
-      paint: { "line-color": "#1c2b22", "line-width": 1.5, "line-dasharray": [3, 3] },
     });
   });
 
   let hovered: string | null = null;
   let selected: string | null = null;
   const setState = (id: string | null, state: Record<string, boolean>) => {
-    if (id !== null) map.setFeatureState({ source: "fields", id }, state);
+    if (id !== null && map.getSource("fields")) map.setFeatureState({ source: "fields", id }, state);
   };
+  const tip = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 14, className: "tip" });
 
   map.on("mousemove", "fields-fill", (ev) => {
-    const id = (ev.features?.[0]?.properties?.id as string) ?? null;
-    if (id === hovered) return;
+    const p = ev.features?.[0]?.properties as FieldProps | undefined;
+    if (!p) return;
+    tip
+      .setLngLat(ev.lngLat)
+      .setHTML(
+        `<b class="grade-chip grade-${p.grade}">${p.grade}</b>
+         <span>${p.crop}<small>${Math.round(p.ha)} ha, bare ${Math.round(p.bare)} weeks a year</small></span>`,
+      )
+      .addTo(map);
+    if (p.id === hovered) return;
     setState(hovered, { hover: false });
-    hovered = id;
+    hovered = p.id;
     setState(hovered, { hover: true });
     map.getCanvas().style.cursor = "pointer";
   });
   map.on("mouseleave", "fields-fill", () => {
     setState(hovered, { hover: false });
     hovered = null;
+    tip.remove();
     map.getCanvas().style.cursor = "";
   });
   map.on("click", "fields-fill", (ev) => {
     const id = ev.features?.[0]?.properties?.id as string | undefined;
     if (id) onPick(id);
-  });
-  // A click on empty map closes the report card.
-  map.on("click", (ev) => {
-    if (!map.getLayer("fields-fill")) return;
-    if (map.queryRenderedFeatures(ev.point, { layers: ["fields-fill"] }).length === 0) onPick(null);
   });
 
   return {
@@ -103,14 +149,20 @@ export function createMap(container: string, meta: Meta, onPick: (id: string | n
     select(id: string | null) {
       setState(selected, { selected: false });
       selected = id;
-      // Feature state needs the source loaded; retry once it is.
       const apply = () => setState(selected, { selected: true });
       if (map.getSource("fields") && map.isSourceLoaded("fields")) apply();
       else map.once("idle", apply);
+      const box = id ? boxes.get(id) : home;
+      if (box) map.fitBounds(box, { padding: cardPadding(), maxZoom: 12.5, duration: 900 });
     },
     setAerial(on: boolean) {
+      aerial = on;
       map.setLayoutProperty("aerial", "visibility", on ? "visible" : "none");
-      map.setPaintProperty("fields-fill", "fill-opacity", on ? 0.35 : 0.72);
+      map.setPaintProperty("fields-fill", "fill-opacity", fillOpacity());
+    },
+    setGradeFilter(grade: string | null) {
+      filter = grade;
+      map.setPaintProperty("fields-fill", "fill-opacity", fillOpacity());
     },
   };
 }

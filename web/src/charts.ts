@@ -70,7 +70,7 @@ export function ribbon(field: Field, plan: Plan, meta: Meta): string {
           const heavy = meta.heavy[yi][w] === "1";
           const rain = meta.rain[yi][w];
           const tip = `Week of ${weekStart(year, w)}: ${STATE_WORDS[s] ?? s}${heavy ? `. Heavy rain, ${rain} mm` : ""}`;
-          return `<rect class="${cellClass(s, heavy)}" x="${w * cw + 0.5}" y="4" width="${cw - 1}" height="16"><title>${tip}</title></rect>${
+          return `<rect class="${cellClass(s, heavy)}" x="${w * cw + 0.5}" y="4" width="${cw - 1}" height="16" rx="1.5"><title>${tip}</title></rect>${
             heavy ? `<rect class="wk-rain" x="${w * cw + 0.5}" y="0" width="${cw - 1}" height="3"/>` : ""
           }`;
         })
