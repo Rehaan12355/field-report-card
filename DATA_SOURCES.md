@@ -49,7 +49,7 @@ those weeks separately as "likely"; see docs/methods.md.
 |------|----------|------------------|--------|---------|--------|
 | HLS Vegetation Indices (HLSL30_VI, HLSS30_VI v2.0) | NASA LP DAAC (Landsat: NASA/USGS, Sentinel-2: ESA) | Greenness (NDVI) at 30 m | HTTPS window reads with Earthdata login | To be recorded | Working: 319 scenes found for Box 1 in 2024, Fmask windows read |
 | NASA POWER, Agroclimatology | NASA LaRC | Daily temperature and rain since the 1980s, about 0.5 degree grid | REST API, no login | To be recorded | Working: 12,784 daily values, 1991 to 2025 |
-| Cropland Data Layer (CDL) | USDA NASS | Crop per 30 m pixel per year | National file from USDA NASS, cropped to the box (fallback) | To be recorded | Downloading |
+| Cropland Data Layer (CDL) | USDA NASS | Crop per 30 m pixel per year | National file from USDA NASS, cropped to the box (fallback) | To be recorded | Working: 2024 cropped to the box (796 by 796 pixels at 30 m); other years downloading |
 | CDL code list | USDA NASS | Crop names for CDL numbers | `cdl_codes_names.xlsx` | To be recorded | Not pulled yet |
 | Soil survey (SSURGO) | USDA NRCS | Erodibility, organic matter, water-holding capacity | Soil Data Access REST | To be recorded | Not checked |
 | NAIP aerial photos | USDA | About 1 m photos for spot checks | Public | To be recorded | Not checked |
@@ -63,3 +63,4 @@ those weeks separately as "likely"; see docs/methods.md.
 | File | URL | Date fetched | Size | Licence |
 |------|-----|--------------|------|---------|
 | `data/raw/power/power_daily_-117.35_46.8_1991_2025.json` | https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR,T2M_MAX,T2M_MIN&community=AG&longitude=-117.35&latitude=46.8&start=19910101&end=20251231&format=JSON | 2026-11-14 | 624,996 bytes | To be recorded |
+| `data/raw/cdl/2024_30m_cdls.zip` | https://www.nass.usda.gov/sites/default/files/Research_and_Science/Cropland/Release/datasets/2024_30m_cdls.zip | 2026-11-14 | 1,656,243,429 bytes | To be recorded |
