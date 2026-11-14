@@ -10,10 +10,16 @@ WEB_DATA_DIR = ROOT / "web" / "public" / "data"
 # Map centre for the demo county (Whitman County, Washington): lon, lat.
 COUNTY_CENTER = (-117.52, 46.90)
 
-# Study box as (west, south, east, north) in degrees: about 20 by 20 km of
-# farmland between Colfax and Pullman. Confirmed by the team on 14 Nov 2026.
-STUDY_BOX = (-117.48, 46.71, -117.22, 46.89)
-HLS_TILE = "T11TMM"
+# The study area: all of Whitman County, Washington. The outline is the US
+# Census Bureau county boundary (TIGERweb, GEOID 53075, fetched 14 Nov 2026).
+REGION_NAME = "Whitman County, Washington"
+BOUNDARY_FILE = ROOT / "pipeline" / "whitman_county.geojson"
+# Box around the county as (west, south, east, north) in degrees.
+STUDY_BOX = (-118.25, 46.416, -117.039, 47.261)
+# HLS tiles that together cover the county.
+HLS_TILES = ("T11TMM", "T11TMN")
+# The first build covered only this box between Colfax and Pullman.
+PILOT_BOX = (-117.48, 46.71, -117.22, 46.89)
 
 YEARS = range(2019, 2026)
 

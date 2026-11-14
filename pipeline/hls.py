@@ -13,7 +13,7 @@ import pandas as pd
 import rasterio
 from rasterio import features
 from rasterio.warp import transform_bounds
-from rasterio.windows import from_bounds
+from rasterio.windows import Window, from_bounds
 
 from pipeline import config
 
@@ -67,6 +67,8 @@ def read_window(url, box):
         with rasterio.open(url) as src:
             bounds = transform_bounds("EPSG:4326", src.crs, *box)
             window = from_bounds(*bounds, transform=src.transform).round_offsets().round_lengths()
+            # Keep to the part of the box this tile actually covers.
+            window = window.intersection(Window(0, 0, src.width, src.height))
             return src.read(1, window=window), src.window_transform(window), src.crs
 
 
@@ -83,7 +85,7 @@ def clear_share(fmask):
     }
 
 
-HLS_DIR = config.RAW_DIR / "hls"
+HLS_DIR = config.RAW_DIR / "hls_county"
 
 
 def _read_with_retry(url, box, tries=4):
@@ -97,25 +99,29 @@ def _read_with_retry(url, box, tries=4):
 
 
 def cache_scene(scene, box):
-    """Save one scene's NDVI and Fmask windows over the box to data/raw/hls.
-    NDVI stays as stored by NASA (integer, scale 0.0001, fill -19999)."""
-    out = HLS_DIR / f"{scene['id']}.npz"
+    """Save one scene's NDVI and Fmask windows over the box to
+    data/raw/hls/<tile>. NDVI stays as stored by NASA (integer, scale 0.0001,
+    fill -19999)."""
+    out = HLS_DIR / scene["tile"] / f"{scene['id']}.npz"
     if out.exists():
         return "cached"
     ndvi, transform, crs = _read_with_retry(scene["links"]["NDVI"], box)
     fmask, _, _ = _read_with_retry(scene["links"]["Fmask"], box)
+    tmp = out.with_suffix(".tmp.npz")
     np.savez_compressed(
-        out, ndvi=ndvi, fmask=fmask, transform=np.array(transform)[:6], crs=crs.to_string(), date=str(scene["date"])
+        tmp, ndvi=ndvi, fmask=fmask, transform=np.array(transform)[:6], crs=crs.to_string(), date=str(scene["date"])
     )
+    tmp.rename(out)  # a half-written file never looks finished
     return "downloaded"
 
 
-def cache_years(box, years, tile):
-    """Download every scene over the box for the given years. Safe to rerun:
-    scenes already saved are skipped."""
-    HLS_DIR.mkdir(parents=True, exist_ok=True)
+def cache_years(box, years, tiles):
+    """Download every scene over the box for the given years and tiles. Safe
+    to rerun: scenes already saved are skipped."""
+    for tile in tiles:
+        (HLS_DIR / tile).mkdir(parents=True, exist_ok=True)
     for year in years:
-        scenes = search(box, f"{year}-01-01", f"{year}-12-31", tile=tile)
+        scenes = [s for s in search(box, f"{year}-01-01", f"{year}-12-31") if s["tile"] in tiles]
         (HLS_DIR / f"scenes_{year}.json").write_text(
             json.dumps([{**s, "date": str(s["date"])} for s in scenes], indent=1)
         )
@@ -128,7 +134,7 @@ def cache_years(box, years, tile):
                 failed.append((scene["id"], repr(e)[:200]))
                 return "failed"
 
-        with ThreadPoolExecutor(8) as pool:
+        with ThreadPoolExecutor(12) as pool:
             results.update(pool.map(one, scenes))
         print(year, len(scenes), "scenes", dict(results), flush=True)
         for f in failed:
@@ -232,4 +238,4 @@ def run(fields):
 
 
 if __name__ == "__main__":
-    cache_years(config.STUDY_BOX, config.YEARS, config.HLS_TILE)
+    cache_years(config.STUDY_BOX, config.YEARS, config.HLS_TILES)
