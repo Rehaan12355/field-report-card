@@ -5,8 +5,9 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 
 maplibregl.setWorkerUrl(workerUrl);
 
-// OpenFreeMap: free vector basemap, no API key.
-const BASEMAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+// OpenFreeMap: free vector basemap, no API key. The pale style keeps the
+// field grade colours as the loudest thing on the map.
+const BASEMAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
 // Whitman County, Washington. Keep in step with pipeline/config.py.
 const COUNTY_CENTER: [number, number] = [-117.52, 46.9];
