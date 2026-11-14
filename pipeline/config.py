@@ -9,8 +9,10 @@ WEB_DATA_DIR = ROOT / "web" / "public" / "data"
 # Map centre for the demo county (Whitman County, Washington): lon, lat.
 COUNTY_CENTER = (-117.52, 46.90)
 
-# Study box as (west, south, east, north) in degrees. Chosen in step 2.
-STUDY_BOX = None
+# Study box as (west, south, east, north) in degrees: about 20 by 20 km of
+# farmland between Colfax and Pullman. Confirmed by the team on 14 Nov 2026.
+STUDY_BOX = (-117.48, 46.71, -117.22, 46.89)
+HLS_TILE = "T11TMM"
 
 YEARS = range(2019, 2026)
 
@@ -18,6 +20,11 @@ YEARS = range(2019, 2026)
 NDVI_BARE_THRESHOLD = 0.25
 # Gaps up to this many weeks are filled by linear interpolation.
 MAX_GAP_WEEKS = 3
+# Longer gaps (mostly cloudy winters) are bridged only when the last clear look
+# before and the first after agree: both bare gives "likely bare", both green
+# gives "likely green". Otherwise the weeks stay unknown. Likely weeks are
+# always reported separately from weeks actually seen.
+BRIDGE_AGREEING_GAPS = True
 
 # A week is heavy rain when its total is in the top share of weeks since 1991.
 HEAVY_RAIN_TOP_SHARE = 0.10

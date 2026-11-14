@@ -6,7 +6,7 @@ from anywhere else.
 
 ## Study box
 
-**Proposed, waiting for the team to confirm.** Checked on 14 November 2026.
+**Box 1, confirmed by the team on 14 November 2026.** Box 2 was checked for comparison.
 
 | | West | South | East | North | HLS tile |
 |---|---|---|---|---|---|
@@ -40,7 +40,8 @@ Sep 1%, Oct 5%, Nov 19%, Dec 21%.
 
 **Finding:** 59% of heavy-rain weeks fall in November to January, the months
 the satellites see least. How winter gaps are treated decides the exposed-weeks
-number; see docs/methods.md once the team has chosen.
+number. The team chose to bridge long gaps when both ends agree and report
+those weeks separately as "likely"; see docs/methods.md.
 
 ## Datasets
 

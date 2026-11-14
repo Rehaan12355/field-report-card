@@ -1,5 +1,9 @@
 """Read HLS greenness windows over the study box and make weekly NDVI per field."""
 
+import json
+import time
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 import earthaccess
@@ -74,3 +78,59 @@ def clear_share(fmask):
         "snow": float(np.sum(valid & ~cloudy & snowy)) / n,
         "missing": float(np.sum(~valid)) / n,
     }
+
+
+HLS_DIR = config.RAW_DIR / "hls"
+
+
+def _read_with_retry(url, box, tries=4):
+    for attempt in range(tries):
+        try:
+            return read_window(url, box)
+        except rasterio.errors.RasterioIOError:
+            if attempt == tries - 1:
+                raise
+            time.sleep(2 * (attempt + 1))
+
+
+def cache_scene(scene, box):
+    """Save one scene's NDVI and Fmask windows over the box to data/raw/hls.
+    NDVI stays as stored by NASA (integer, scale 0.0001, fill -19999)."""
+    out = HLS_DIR / f"{scene['id']}.npz"
+    if out.exists():
+        return "cached"
+    ndvi, transform, crs = _read_with_retry(scene["links"]["NDVI"], box)
+    fmask, _, _ = _read_with_retry(scene["links"]["Fmask"], box)
+    np.savez_compressed(
+        out, ndvi=ndvi, fmask=fmask, transform=np.array(transform)[:6], crs=crs.to_string(), date=str(scene["date"])
+    )
+    return "downloaded"
+
+
+def cache_years(box, years, tile):
+    """Download every scene over the box for the given years. Safe to rerun:
+    scenes already saved are skipped."""
+    HLS_DIR.mkdir(parents=True, exist_ok=True)
+    for year in years:
+        scenes = search(box, f"{year}-01-01", f"{year}-12-31", tile=tile)
+        (HLS_DIR / f"scenes_{year}.json").write_text(
+            json.dumps([{**s, "date": str(s["date"])} for s in scenes], indent=1)
+        )
+        results, failed = Counter(), []
+
+        def one(scene):
+            try:
+                return cache_scene(scene, box)
+            except Exception as e:
+                failed.append((scene["id"], repr(e)[:200]))
+                return "failed"
+
+        with ThreadPoolExecutor(8) as pool:
+            results.update(pool.map(one, scenes))
+        print(year, len(scenes), "scenes", dict(results), flush=True)
+        for f in failed:
+            print("  FAILED", *f, flush=True)
+
+
+if __name__ == "__main__":
+    cache_years(config.STUDY_BOX, config.YEARS, config.HLS_TILE)
