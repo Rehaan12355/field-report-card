@@ -1,4 +1,9 @@
 import * as maplibregl from "maplibre-gl";
+// The bundler does not pick up MapLibre's worker on its own, so bundle it
+// here and tell MapLibre where it ended up.
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
+
+maplibregl.setWorkerUrl(workerUrl);
 
 // OpenFreeMap: free vector basemap, no API key.
 const BASEMAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
