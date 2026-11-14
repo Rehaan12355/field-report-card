@@ -1,0 +1,11 @@
+numpy
+pandas
+xarray
+rasterio
+geopandas
+shapely
+scipy
+earthaccess
+requests
+python-dotenv
+pytest

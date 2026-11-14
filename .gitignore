@@ -1,0 +1,27 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Node
+node_modules/
+web/dist/
+*.tsbuildinfo
+
+# Data downloads and caches
+data/raw/*
+!data/raw/.gitkeep
+
+# Secrets
+.env
+.netrc
+
+# Team planning doc, kept out of the public repo
+*handoff.pdf
+
+# OS and editors
+.DS_Store
+.vscode/
+.idea/

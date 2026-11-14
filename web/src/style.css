@@ -1,0 +1,42 @@
+:root {
+  --bar-height: 48px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #1f2a1c;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+#topbar {
+  height: var(--bar-height);
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  background: #fbfaf5;
+  border-bottom: 1px solid #d9d6c8;
+}
+
+#topbar h1 {
+  margin: 0;
+  font-size: 18px;
+  line-height: var(--bar-height);
+}
+
+#topbar p {
+  margin: 0;
+  font-size: 13px;
+  color: #5d6657;
+}
+
+#map {
+  position: absolute;
+  top: var(--bar-height);
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
