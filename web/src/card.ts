@@ -1,6 +1,6 @@
 import { greennessCurve, ribbon, ribbonKey } from "./charts";
 import { planDetail, planTable, priorities, sliders } from "./plans";
-import type { Field, Measure, Meta, Plan } from "./types";
+import type { Cell, Field, Measure, Meta, Plan } from "./types";
 
 type Handlers = {
   onClose: () => void;
@@ -19,10 +19,10 @@ function dayOfYear(doy: number): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 }
 
-function climatePanel(meta: Meta): string {
-  const m = meta.climate.measures;
-  const [n0, n1] = meta.climate.normal_years;
-  const [r0, r1] = meta.climate.recent_years;
+function climatePanel(cell: Cell): string {
+  const m = cell.climate.measures;
+  const [n0, n1] = cell.climate.normal_years;
+  const [r0, r1] = cell.climate.recent_years;
   const row = (label: string, v: Measure, fmt: (x: number) => string, more: string, fewer: string, unit: string) => {
     const diff = v.recent - v.normal;
     const word = Math.abs(diff) < 0.5 ? "no change" : `${Math.abs(Math.round(diff))} ${unit} ${diff > 0 ? more : fewer}`;
@@ -39,7 +39,8 @@ function climatePanel(meta: Meta): string {
         ${row("Rain a year", m.rain_mm, (x) => `${num(x)} mm`, "more", "less", "mm")}
       </tbody>
     </table>
-    <p class="note">NASA POWER, one grid cell of about 50 km covering the whole study area.</p>
+    <p class="note">NASA POWER. The climate grid is coarse: one cell of about 50 km covers this field and its
+      neighbours. A heavy-rain week here is ${cell.heavy_mm} mm or more.</p>
   </section>`;
 }
 
@@ -100,7 +101,7 @@ function render(animate: boolean): void {
         Below the dashed line (NDVI ${meta.ndvi_threshold}) counts as bare.</p>
     </section>
 
-    ${climatePanel(meta)}
+    ${climatePanel(meta.cells[field.cell])}
     ${soilPanel(field)}
 
     <section><p class="note">The field outline is approximate. The grade is a screening tool, not a soil test.

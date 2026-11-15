@@ -119,6 +119,9 @@ def build_fields(years, box):
         if poly.area / 10_000 >= config.MIN_FIELD_HECTARES:
             geoms.append(poly)
     fields = gpd.GeoDataFrame(geometry=geoms, crs=crs)
+    # Keep fields whose inside point falls in the county.
+    county = gpd.read_file(config.BOUNDARY_FILE).to_crs(crs).geometry.union_all()
+    fields = fields[fields.geometry.representative_point().within(county)].reset_index(drop=True)
     fields["ha"] = (fields.area / 10_000).round(1)
     # Stable ids: sort north to south, then west to east.
     c = fields.geometry.centroid

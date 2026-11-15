@@ -59,8 +59,9 @@ def plan_record(key, status, crops, heavy, traits, max_exposed, classes):
     }
 
 
-def build(fields, history, ndvi, snow, heavy, classes, traits, threshold=None):
-    """Score every field and its three plans. Returns (records, extras)."""
+def build(fields, history, ndvi, snow, heavy_cells, cell_of, classes, traits, threshold=None):
+    """Score every field and its three plans. heavy_cells is [cell, year,
+    week]; cell_of gives each field's climate cell. Returns (records, extras)."""
     n, years = history.shape
     statuses = np.empty((n, years, WEEKS), dtype="<U1")
     for i in range(n):
@@ -68,7 +69,7 @@ def build(fields, history, ndvi, snow, heavy, classes, traits, threshold=None):
         statuses[i] = s.reshape(years, WEEKS)
     profiles = score.crop_profiles(statuses, ndvi, history)
     legume = pick_legume(history, traits, profiles)
-    current = [score.count(statuses[i], heavy) for i in range(n)]
+    current = [score.count(statuses[i], heavy_cells[cell_of[i]]) for i in range(n)]
     max_exposed = max(c["exposed"] for c in current)
     # Crops that could be swapped in: annual crops with a measured pattern,
     # most widely grown in the box first.
@@ -81,6 +82,7 @@ def build(fields, history, ndvi, snow, heavy, classes, traits, threshold=None):
     records = []
     for i in range(n):
         crops = [int(c) for c in history[i]]
+        heavy = heavy_cells[cell_of[i]]
         plans = [plan_record("current", statuses[i], crops, heavy, traits, max_exposed, classes)]
         cover = score.cover_crop_plan(statuses[i], crops, traits)
         plans.append(plan_record("cover", cover, crops, heavy, traits, max_exposed, classes))
@@ -97,18 +99,19 @@ def build(fields, history, ndvi, snow, heavy, classes, traits, threshold=None):
 
 
 def county_summary(statuses, heavy, ha):
-    """Share of the box's cropland (by area, where the state is known) that is
-    bare in an average heavy-rain week."""
+    """Share of the cropland (by area, where the state is known) that is bare
+    in an average heavy-rain week. heavy is [field, year, week]."""
     known = ~np.isin(statuses, (score.UNKNOWN, score.SNOW))
     bare = np.isin(statuses, (score.BARE, score.LIKELY_BARE))
-    w = ha[:, None, None] * heavy[None, :, :]
+    w = ha[:, None, None] * heavy
     return float((bare * w).sum() / max((known * w).sum(), 1e-9))
 
 
-def write(fields, history, ndvi, snow, heavy, rain, rain_threshold, trend, classes, looks, soil=None):
+def write(fields, history, ndvi, snow, cells, cell_of, classes, looks, soil=None):
     years = list(config.YEARS)
     traits = load_traits()
-    records, extra = build(fields, history, ndvi, snow, heavy, classes, traits)
+    heavy_cells = np.stack([c["heavy"] for c in cells])
+    records, extra = build(fields, history, ndvi, snow, heavy_cells, cell_of, classes, traits)
     out = config.WEB_DATA_DIR
     if (out / "fields").exists():
         shutil.rmtree(out / "fields")
@@ -146,6 +149,7 @@ def write(fields, history, ndvi, snow, heavy, rain, rain_threshold, trend, class
         doc = {
             "id": fid,
             "ha": float(fields.ha.iloc[i]),
+            "cell": int(cell_of[i]),
             "years": years,
             "ndvi": [[None if np.isnan(v) else _r(v, 2) for v in row] for row in rec["ndvi"]],
             "plans": plans,
@@ -165,7 +169,7 @@ def write(fields, history, ndvi, snow, heavy, rain, rain_threshold, trend, class
         )
 
     web = fields.copy()
-    web["geometry"] = web.geometry.simplify(12)
+    web["geometry"] = web.geometry.simplify(20)
     web = web.to_crs(4326)[["geometry"]]
     for key in props[0]:
         web[key] = [p[key] for p in props]
@@ -174,23 +178,32 @@ def write(fields, history, ndvi, snow, heavy, rain, rain_threshold, trend, class
     ha = fields.ha.values
     meta = {
         "generated": date.today().isoformat(),
-        "region": getattr(config, "REGION_NAME", "the Colfax to Pullman area of Whitman County, Washington"),
+        "region": config.REGION_NAME,
         "box": list(config.STUDY_BOX),
         "years": years,
         "fields": len(fields),
         "hectares": _r(ha.sum(), 0),
         "ndvi_threshold": config.NDVI_BARE_THRESHOLD,
-        "heavy": ["".join("1" if h else "0" for h in row) for row in heavy],
-        "heavy_mm": _r(rain_threshold),
-        "rain": [[None if np.isnan(v) else _r(v) for v in row] for row in rain],
-        "climate": trend,
+        # One entry per NASA POWER grid cell that holds fields.
+        "cells": [
+            {
+                "lon": c["lon"],
+                "lat": c["lat"],
+                "fields": c["fields"],
+                "heavy": ["".join("1" if h else "0" for h in row) for row in c["heavy"]],
+                "heavy_mm": _r(c["heavy_mm"]),
+                "rain": [[None if np.isnan(v) else _r(v) for v in row] for row in c["rain"]],
+                "climate": c["climate"],
+            }
+            for c in cells
+        ],
         "crops": crop_info,
         "legume": extra["legume"],
         "max_exposed": _r(extra["max_exposed"]),
         "grades": {g: grades[g] for g in "ABCDF"},
         "grade_weights": config.GRADE_WEIGHTS,
         "grade_cutoffs": config.GRADE_CUTOFFS,
-        "bare_in_heavy_rain_share": _r(county_summary(extra["statuses"], heavy, ha), 3),
+        "bare_in_heavy_rain_share": _r(county_summary(extra["statuses"], heavy_cells[cell_of], ha), 3),
         "clear_looks": {str(y): [int(v) for v in looks[yi]] for yi, y in enumerate(years)},
         "sources": plan_text.SOURCES,
     }

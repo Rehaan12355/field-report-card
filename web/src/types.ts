@@ -39,6 +39,8 @@ export type Soil = {
 export type Field = {
   id: string;
   ha: number;
+  /** Index into Meta.cells: the climate grid cell this field sits in. */
+  cell: number;
   years: number[];
   ndvi: (number | null)[][];
   plans: Plan[];
@@ -49,14 +51,10 @@ export type CropInfo = { name: string; color: string; legume: boolean; perennial
 
 export type Measure = { normal: number; recent: number };
 
-export type Meta = {
-  generated: string;
-  region?: string;
-  box: [number, number, number, number];
-  years: number[];
+export type Cell = {
+  lon: number;
+  lat: number;
   fields: number;
-  hectares: number;
-  ndvi_threshold: number;
   heavy: string[];
   heavy_mm: number;
   rain: (number | null)[][];
@@ -65,6 +63,18 @@ export type Meta = {
     recent_years: [number, number];
     measures: Record<"hot_days" | "last_spring_frost" | "first_fall_frost" | "rain_mm", Measure>;
   };
+};
+
+export type Meta = {
+  generated: string;
+  region?: string;
+  box: [number, number, number, number];
+  years: number[];
+  fields: number;
+  hectares: number;
+  ndvi_threshold: number;
+  /** One entry per NASA POWER grid cell that holds fields. */
+  cells: Cell[];
   crops: Record<string, CropInfo>;
   grades: Record<string, number>;
   bare_in_heavy_rain_share: number;

@@ -1,4 +1,4 @@
-"""Pull NASA POWER daily climate for the study box since 1991."""
+"""Pull NASA POWER daily climate for the study area since 1991."""
 
 import json
 
@@ -13,12 +13,21 @@ POWER_URL = "https://power.larc.nasa.gov/api/temporal/daily/point"
 POWER_DIR = config.RAW_DIR / "power"
 START_YEAR = config.CLIMATE_BASELINE_YEARS[0]
 RECENT_YEARS = 10
+# NASA POWER's weather grid (from MERRA-2): cells of 0.5 degrees of latitude
+# by 0.625 degrees of longitude, centred on multiples of those steps.
+LAT_STEP, LON_STEP = 0.5, 0.625
 
 
-def daily(box, end_year):
-    """Daily rain (mm), max and min temperature (deg C) at the box centre.
-    NASA POWER's grid is about 0.5 degrees, so one point stands for the box."""
-    lon, lat = round((box[0] + box[2]) / 2, 2), round((box[1] + box[3]) / 2, 2)
+def cell_centres(box):
+    """Centres of the POWER grid cells that touch the box, as (lon, lat)."""
+    w, s, e, n = box
+    lons = np.arange(np.round(w / LON_STEP), np.round(e / LON_STEP) + 1) * LON_STEP
+    lats = np.arange(np.round(s / LAT_STEP), np.round(n / LAT_STEP) + 1) * LAT_STEP
+    return [(float(lon), float(lat)) for lat in lats for lon in lons]
+
+
+def daily(lon, lat, end_year):
+    """Daily rain (mm), max and min temperature (deg C) for one grid cell."""
     cache = POWER_DIR / f"power_daily_{lon}_{lat}_{START_YEAR}_{end_year}.json"
     if not cache.exists():
         params = {
@@ -48,7 +57,7 @@ def weekly_rain(df):
 
 def heavy_weeks(df, years):
     """True for weeks whose rain total is in the top share of all weeks since
-    1991. Returns (mask [year, week], threshold in mm, weekly totals)."""
+    1991 in that cell. Returns (mask [year, week], threshold in mm, totals)."""
     weekly = weekly_rain(df)
     threshold = float(np.nanquantile(weekly.values, 1 - config.HEAVY_RAIN_TOP_SHARE))
     chosen = weekly.loc[list(years)]
@@ -88,15 +97,45 @@ def climate_trend(df, last_year):
     }
 
 
-def run():
+def nearest_cell(fields, centres):
+    """Index of the grid cell each field's centre falls nearest to."""
+    pts = fields.to_crs(4326).geometry.representative_point()
+    xy = np.column_stack([pts.x.values, pts.y.values])
+    c = np.array(centres)
+    # Scale by the cell size so "nearest" means "inside that cell".
+    d = ((xy[:, None, 0] - c[None, :, 0]) / LON_STEP) ** 2 + ((xy[:, None, 1] - c[None, :, 1]) / LAT_STEP) ** 2
+    return d.argmin(axis=1)
+
+
+def run(fields):
+    """Climate for every grid cell that holds fields. Returns the list of
+    cells and each field's cell index."""
     years = list(config.YEARS)
-    df = daily(config.STUDY_BOX, years[-1])
-    heavy, threshold, totals = heavy_weeks(df, years)
-    trend = climate_trend(df, years[-1])
-    print(f"heavy-rain week: {threshold:.1f} mm or more; {heavy.sum()} heavy weeks in {years[0]} to {years[-1]}")
-    print("climate", json.dumps(trend["measures"]))
-    return heavy, threshold, totals, trend
+    centres = cell_centres(config.STUDY_BOX)
+    which = nearest_cell(fields, centres)
+    used = sorted(set(which.tolist()))
+    cells = []
+    for ci in used:
+        lon, lat = centres[ci]
+        df = daily(lon, lat, years[-1])
+        heavy, threshold, totals = heavy_weeks(df, years)
+        cells.append(
+            {
+                "lon": lon,
+                "lat": lat,
+                "heavy": heavy,
+                "heavy_mm": threshold,
+                "rain": totals,
+                "climate": climate_trend(df, years[-1]),
+                "fields": int((which == ci).sum()),
+            }
+        )
+        print(f"  cell {lon}, {lat}: {cells[-1]['fields']} fields, heavy week {threshold:.1f} mm or more, {heavy.sum()} heavy weeks")
+    remap = {ci: i for i, ci in enumerate(used)}
+    return cells, np.array([remap[c] for c in which.tolist()])
 
 
 if __name__ == "__main__":
-    run()
+    import geopandas as gpd
+
+    run(gpd.read_file(config.WORK_DIR / "fields.gpkg"))

@@ -82,6 +82,8 @@ function render(meta: Meta, v: Validation): string {
         .map((c) => `<tr><th scope="row">${c}</th><td>${pct(acc.producer[c])}</td><td>${pct(acc.user[c])}</td></tr>`)
         .join("")
     : "";
+  const mm = meta.cells.map((c) => c.heavy_mm);
+  const heavyMm = mm.length > 1 ? `${Math.min(...mm)} to ${Math.max(...mm)} mm or more, depending on the grid cell` : `${mm[0]} mm or more`;
   const src = (id: string) => {
     const s = meta.sources[id];
     return s ? `<a href="${s.url}" target="_blank" rel="noopener">${s.title}</a>` : "";
@@ -92,9 +94,9 @@ function render(meta: Meta, v: Validation): string {
     made, what we checked, and where it falls short. The grade is a screening tool, not a soil test.</p>
 
   <h3>What you are looking at</h3>
-  <p>${meta.fields} fields covering ${Math.round(meta.hectares).toLocaleString("en-US")} hectares between Colfax and
-    Pullman in Whitman County, Washington, ${y0} to ${y1}. The method uses data that covers the contiguous United
-    States; this demo runs it on one study area of about 20 by 20 km.</p>
+  <p>${meta.fields.toLocaleString("en-US")} fields covering ${Math.round(meta.hectares).toLocaleString("en-US")}
+    hectares of cropland in ${meta.region}, ${y0} to ${y1}. The method uses data that covers the contiguous
+    United States; this demo runs it on one county.</p>
 
   <h3>The data</h3>
   <table class="facts">
@@ -103,7 +105,7 @@ function render(meta: Meta, v: Validation): string {
         HLSS30_VI, version 2.0) from NASA's LP DAAC: greenness (NDVI) and a cloud mask at 30 m, every few days.
         Landsat is a NASA and USGS mission; Sentinel-2 is from the European Space Agency.</td></tr>
       <tr><th scope="row">NASA POWER</th><td class="words">Daily rain and temperature since 1991, on a grid of about 50 km.
-        One grid cell covers the whole study area.</td></tr>
+        ${meta.cells.length} grid cells cover the fields; each field uses the cell it sits in.</td></tr>
       <tr><th scope="row">USDA Cropland Data Layer</th><td class="words">The crop grown on each 30 m pixel, each year.</td></tr>
       <tr><th scope="row">USDA soil survey</th><td class="words">SSURGO soil properties, read at the centre of each field.</td></tr>
     </tbody>
@@ -126,20 +128,22 @@ function render(meta: Meta, v: Validation): string {
     ${pct(v.week_states.seen)} were seen, ${pct(v.week_states.likely)} are likely, ${pct(v.week_states.snow)} were
     snow and ${pct(v.week_states.unknown)} stayed unknown.</p>
   <div class="table-scroll"><table class="facts looks">
-    <caption>Satellite passes with at least half the fields in clear view, by month</caption>
+    <caption>Satellite passes with at least half the fields in clear view, by month (the southern of the
+      two image tiles, which holds most fields)</caption>
     <thead><tr><td></td>${MONTHS.map((m) => `<th scope="col">${m}</th>`).join("")}</tr></thead>
     <tbody>${looks}</tbody>
   </table></div>
 
   <h3>Heavy rain and exposed weeks</h3>
-  <p>A heavy-rain week is one whose rain total is in the top 10% of all weeks since ${v.rain_season_check.since}:
-    ${meta.heavy_mm} mm or more. ${pct(v.rain_season_check.share_november_to_march)} of those weeks fall between
+  <p>A heavy-rain week is one whose rain total is in the top 10% of all weeks since ${v.rain_season_check.since}
+    in that grid cell:
+    ${heavyMm}. ${pct(v.rain_season_check.share_november_to_march)} of those weeks fall between
     November and March. An exposed week is a bare week that is also a heavy-rain week. In an average heavy-rain
     week, ${pct(meta.bare_in_heavy_rain_share)} of this cropland (by area, where its state is known) is bare.</p>
 
   <h3>The grade</h3>
   <p>The score is out of 100: up to ${w.bare} points for few bare weeks, up to ${w.exposed} for few exposed weeks
-    (against the worst field in the study area), and up to ${w.variety} for crop variety, with a bonus for a
+    (against the worst field in the county), and up to ${w.variety} for crop variety, with a bonus for a
     legume or a perennial. Likely weeks count the same as seen weeks. Grades: A from ${cuts.A}, B from ${cuts.B},
     C from ${cuts.C}, D from ${cuts.D}, F below. These weights are a starting point, not a tested standard.</p>
 
@@ -204,7 +208,7 @@ function render(meta: Meta, v: Validation): string {
     <li>Grades shift strongly with the bare threshold.</li>
     <li>Winter weeks are mostly inferred, and that is when most heavy rain falls.</li>
     <li>Field outlines are approximate.</li>
-    <li>One climate grid cell covers the whole area, so rain timing is regional, not per field.</li>
+    <li>Climate grid cells are about 50 km wide, so rain timing is regional, not per field.</li>
     <li>Slope, tillage and soil type are not part of the grade.</li>
     <li>The aerial photo spot check has not been done.</li>
   </ul>

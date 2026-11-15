@@ -5,6 +5,7 @@ Needs the national CDL zips (pipeline/fetch_cdl.sh) and cached HLS scenes
 """
 
 import json
+import sys
 
 import numpy as np
 
@@ -22,14 +23,20 @@ def load_sources():
 def main():
     load_sources()
     fields, history = cdl.run()
-    ndvi, snow, pixels = hls.run(fields)
+    weekly = config.WORK_DIR / "weekly.npz"
+    if weekly.exists() and len(np.load(weekly)["pixels"]) == len(fields) and "--fresh" not in sys.argv:
+        # Reading every scene is the slow part; reuse it unless asked not to.
+        cached = np.load(weekly)
+        ndvi, snow, pixels = cached["ndvi"], cached["snow"], cached["pixels"]
+    else:
+        ndvi, snow, pixels = hls.run(fields)
     # Leave out fields too small to sample or too rarely seen to grade.
     seen_share = (~np.isnan(ndvi)).mean(axis=(1, 2))
     keep = (pixels >= hls.MIN_FIELD_PIXELS) & (seen_share >= config.MIN_SEEN_SHARE)
-    print(f"{(~keep).sum()} of {len(keep)} outlines left out: outside the study box, or seen in under {config.MIN_SEEN_SHARE:.0%} of weeks")
+    print(f"{(~keep).sum()} of {len(keep)} outlines left out: too small to sample, or seen in under {config.MIN_SEEN_SHARE:.0%} of weeks")
     fields, history, ndvi, snow = fields[keep].reset_index(drop=True), history[keep], ndvi[keep], snow[keep]
     looks = np.load(config.WORK_DIR / "weekly.npz")["looks"]
-    heavy, threshold, rain, trend = power.run()
+    cells, cell_of = power.run(fields)
     classes = cdl.class_table(list(config.YEARS)[-1])
     soil_path = config.WORK_DIR / "soil.json"
     try:
@@ -39,8 +46,8 @@ def main():
     except Exception as e:  # the soil panel is optional; the rest must still build
         print("soil step failed, leaving the soil panel out:", repr(e)[:200])
         soils = None
-    records, extra, meta = export.write(fields, history, ndvi, snow, heavy, rain, threshold, trend, classes, looks, soils)
-    validate.run(fields, history, ndvi, snow, heavy, classes, records, extra, looks)
+    records, extra, meta = export.write(fields, history, ndvi, snow, cells, cell_of, classes, looks, soils)
+    validate.run(fields, history, ndvi, snow, cells, cell_of, classes, records, extra, looks)
     print("grades", meta["grades"], "| legume:", classes[extra["legume"]]["name"] if extra["legume"] else None)
     print(f"cropland bare in an average heavy-rain week: {meta['bare_in_heavy_rain_share']:.0%}")
 

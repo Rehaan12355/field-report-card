@@ -12,7 +12,7 @@ setup:
 data:
 	pipeline/fetch_cdl.sh 2019 2020 2021 2022 2023 2024 2025
 	$(PY) -m pipeline.hls
-	$(PY) -m pipeline.run
+	$(PY) -m pipeline.run --fresh
 
 test:
 	$(PY) -m pytest -q pipeline

@@ -11,8 +11,8 @@ Built for the NASA Space Apps Challenge 2026 (Seattle), challenge
 
 ## How it works
 
-A Python pipeline runs on a laptop over one study box in Whitman County,
-Washington (591 fields, 2019 to 2025), and writes small JSON and GeoJSON files. A static web map loads
+A Python pipeline runs on a laptop over all of Whitman County, Washington
+(6,685 fields, 2019 to 2025), and writes small JSON and GeoJSON files. A static web map loads
 them. Nothing runs on a server.
 
 - **NASA HLS** (Harmonized Landsat and Sentinel-2) vegetation indices: weekly greenness per field
@@ -36,7 +36,7 @@ make setup   # Python virtual environment and web dependencies
 make test    # pipeline tests
 make web     # local map at http://localhost:5173
 make build   # production build in web/dist
-make data    # download inputs and run the pipeline (about 13 GB; needs a NASA
+make data    # download inputs and run the pipeline (about 23 GB; needs a NASA
              # Earthdata login in ~/.netrc)
 ```
 

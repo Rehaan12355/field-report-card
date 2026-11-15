@@ -6,6 +6,7 @@ import warnings
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from multiprocessing import Pool
 
 import earthaccess
 import numpy as np
@@ -156,11 +157,15 @@ def week_of_year(date):
     return min((date.timetuple().tm_yday - 1) // 7, WEEKS - 1)
 
 
-def field_pixels(fields):
-    """Which HLS pixel belongs to which field: an array on the HLS grid holding
-    the field number (1-based) or 0. Outlines are pulled in first so edge
-    pixels that mix two fields are left out."""
-    first = np.load(next(iter(sorted(HLS_DIR.glob("*.npz")))))
+def tile_scenes(tile):
+    return sorted(p for p in (HLS_DIR / tile).glob("*.npz") if not p.name.endswith(".tmp.npz"))
+
+
+def field_pixels(fields, tile):
+    """Which HLS pixel of this tile belongs to which field: an array on the
+    tile's grid holding the field number (1-based) or 0. Outlines are pulled
+    in first so edge pixels that mix two fields are left out."""
+    first = np.load(tile_scenes(tile)[0])
     transform = rasterio.Affine(*first["transform"])
     local = fields.to_crs(str(first["crs"]))
     inner = local.geometry.buffer(-config.FIELD_EDGE_BUFFER_M)
@@ -177,58 +182,96 @@ def field_pixels(fields):
     return labels
 
 
-def weekly_ndvi(fields, years):
+def assign_tiles(fields, tiles):
+    """Tiles overlap. Each field is read from the one tile that holds most of
+    it. Returns {tile: (pixel positions, field index per pixel)} and the
+    number of sampled pixels per field."""
+    n = len(fields)
+    labels = {tile: field_pixels(fields, tile) for tile in tiles}
+    counts = np.stack([np.bincount(labels[t].reshape(-1), minlength=n + 1)[1:] for t in tiles])
+    best = counts.argmax(axis=0)
+    pixels = {}
+    for ti, tile in enumerate(tiles):
+        flat = labels[tile].reshape(-1)
+        pos = np.flatnonzero(flat > 0)
+        fid = flat[pos] - 1
+        keep = best[fid] == ti
+        pixels[tile] = (pos[keep], fid[keep])
+    return pixels, counts.max(axis=0)
+
+
+_W = {}
+
+
+def _init_worker(pos, fid, size):
+    _W.update(pos=pos, fid=fid, size=size, need=np.maximum(MIN_FIELD_PIXELS, MIN_FIELD_SHARE * size))
+
+
+def _scene_medians(path):
+    """Median NDVI of each field's clear pixels in one scene. Returns the
+    scene date, the fields seen with their medians, and the fields that were
+    snowy instead."""
+    scene = np.load(path)
+    pos, fid, size, need = _W["pos"], _W["fid"], _W["size"], _W["need"]
+    ndvi, fmask = scene["ndvi"].reshape(-1)[pos], scene["fmask"].reshape(-1)[pos]
+    valid = (ndvi != NDVI_FILL) & (fmask != FMASK_FILL)
+    cloudy = (fmask & FMASK_CLOUD_BITS) > 0
+    snowy = (fmask & FMASK_SNOW_BIT) > 0
+    clear = valid & ~cloudy & ~snowy
+    n = len(size)
+    seen = (np.bincount(fid[clear], minlength=n) >= need) & (size > 0)
+    snow = (np.bincount(fid[valid & ~cloudy & snowy], minlength=n) >= need) & (size > 0)
+    med = pd.Series(ndvi[clear].astype(np.float32) * NDVI_SCALE).groupby(fid[clear]).median()
+    med = med[seen[med.index.values]]
+    return str(scene["date"]), med.index.values.astype(np.int32), med.values.astype(np.float32), np.flatnonzero(snow)
+
+
+def weekly_ndvi(fields, years, tiles):
     """Median NDVI per field per week from the cached scenes.
 
     Returns ndvi [field, year, week] (NaN where no clear look), snow
-    [field, year, week] (True where the only looks that week were snowy) and
-    looks [year, month] (count of scenes with at least half the fields seen)."""
-    labels = field_pixels(fields)
+    [field, year, week] (True where the only looks that week were snowy),
+    looks [year, month] (scenes of the first tile with at least half of that
+    tile's fields in clear view) and the sampled pixel count per field."""
     n = len(fields)
-    inside = labels > 0
-    fid = labels[inside] - 1
-    size = np.bincount(fid, minlength=n)
     years = list(years)
-    sums = [[[] for _ in range(WEEKS)] for _ in years]
+    pixels, size = assign_tiles(fields, tiles)
+    rows = [[[] for _ in range(WEEKS)] for _ in years]
     snows = np.zeros((n, len(years), WEEKS), dtype=bool)
     looks = np.zeros((len(years), 12), dtype=int)
-    for path in sorted(HLS_DIR.glob("*.npz")):
-        scene = np.load(path)
-        date = datetime.strptime(str(scene["date"]), "%Y-%m-%d").date()
-        if date.year not in years:
-            continue
-        yi, w = years.index(date.year), week_of_year(date)
-        ndvi, fmask = scene["ndvi"][inside], scene["fmask"][inside]
-        valid = (ndvi != NDVI_FILL) & (fmask != FMASK_FILL)
-        cloudy = (fmask & FMASK_CLOUD_BITS) > 0
-        snowy = (fmask & FMASK_SNOW_BIT) > 0
-        clear = valid & ~cloudy & ~snowy
-        n_clear = np.bincount(fid[clear], minlength=n)
-        n_snow = np.bincount(fid[valid & ~cloudy & snowy], minlength=n)
-        seen = (n_clear >= np.maximum(5, MIN_FIELD_SHARE * size)) & (size > 0)
-        snows[:, yi, w] |= (n_snow >= np.maximum(5, MIN_FIELD_SHARE * size)) & (size > 0)
-        if seen.any():
-            med = pd.Series(ndvi[clear].astype(np.float32) * NDVI_SCALE).groupby(fid[clear]).median()
-            row = np.full(n, np.nan, dtype=np.float32)
-            row[med.index.values] = med.values
-            row[~seen] = np.nan
-            sums[yi][w].append(row)
-        if seen.sum() >= 0.5 * n:
-            looks[yi, date.month - 1] += 1
+    for ti, tile in enumerate(tiles):
+        pos, fid = pixels[tile]
+        tile_size = np.bincount(fid, minlength=n)
+        in_tile = int((tile_size > 0).sum())
+        with Pool(initializer=_init_worker, initargs=(pos, fid, tile_size)) as pool:
+            results = pool.imap_unordered(_scene_medians, tile_scenes(tile), chunksize=8)
+            for date_text, ids, values, snow_ids in results:
+                date = datetime.strptime(date_text, "%Y-%m-%d").date()
+                if date.year not in years:
+                    continue
+                yi, w = years.index(date.year), week_of_year(date)
+                snows[snow_ids, yi, w] = True
+                if len(ids):
+                    row = np.full(n, np.nan, dtype=np.float32)
+                    row[ids] = values
+                    rows[yi][w].append(row)
+                if ti == 0 and len(ids) >= 0.5 * in_tile:
+                    looks[yi, date.month - 1] += 1
+        print(f"  {tile}: {in_tile} fields", flush=True)
     out = np.full((n, len(years), WEEKS), np.nan, dtype=np.float32)
     for yi in range(len(years)):
         for w in range(WEEKS):
-            if sums[yi][w]:
+            if rows[yi][w]:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", RuntimeWarning)  # all-NaN columns
-                    out[:, yi, w] = np.nanmedian(np.stack(sums[yi][w]), axis=0)
+                    out[:, yi, w] = np.nanmedian(np.stack(rows[yi][w]), axis=0)
     snows &= np.isnan(out)
     return out, snows, looks, size
 
 
 def run(fields):
     years = list(config.YEARS)
-    ndvi, snow, looks, size = weekly_ndvi(fields, years)
+    ndvi, snow, looks, size = weekly_ndvi(fields, years, config.HLS_TILES)
     np.savez_compressed(
         config.WORK_DIR / "weekly.npz", years=np.array(years), ndvi=ndvi, snow=snow, looks=looks, pixels=size
     )

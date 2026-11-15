@@ -57,6 +57,7 @@ export function patternDefs(): string {
 /** The week ribbon: one row per year, 52 cells, with the year's crop at the left. */
 export function ribbon(field: Field, plan: Plan, meta: Meta): string {
   const cw = 10;
+  const cell = meta.cells[field.cell];
   const months = MONTHS.map((m, i) => {
     const x = (((Date.UTC(2023, i, 1) - Date.UTC(2023, 0, 1)) / 864e5 / 7) * cw).toFixed(1);
     return `<text x="${x}" y="9">${m[0]}</text>`;
@@ -67,8 +68,8 @@ export function ribbon(field: Field, plan: Plan, meta: Meta): string {
       const swapped = plan.swap_year === yi;
       const cells = [...plan.weeks[yi]]
         .map((s, w) => {
-          const heavy = meta.heavy[yi][w] === "1";
-          const rain = meta.rain[yi][w];
+          const heavy = cell.heavy[yi][w] === "1";
+          const rain = cell.rain[yi][w];
           const tip = `Week of ${weekStart(year, w)}: ${STATE_WORDS[s] ?? s}${heavy ? `. Heavy rain, ${rain} mm` : ""}`;
           return `<rect class="${cellClass(s, heavy)}" x="${w * cw + 0.5}" y="4" width="${cw - 1}" height="16" rx="1.5"><title>${tip}</title></rect>${
             heavy ? `<rect class="wk-rain" x="${w * cw + 0.5}" y="0" width="${cw - 1}" height="3"/>` : ""

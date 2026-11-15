@@ -66,13 +66,13 @@ def fallow_check(statuses, history):
     return {"fallow": stats(fallow), "cropped": stats(cropped)}
 
 
-def threshold_test(fields, history, ndvi, snow, heavy, classes, traits, base_records, base_statuses):
+def threshold_test(fields, history, ndvi, snow, heavy_cells, cell_of, classes, traits, base_records, base_statuses):
     """Rerun the grades with a lower and a higher bare threshold."""
     order = "ABCDF"
     base = [r["plans"][0] for r in base_records]
     out = {}
     for threshold in (0.20, 0.30):
-        records, extra = export.build(fields, history, ndvi, snow, heavy, classes, traits, threshold)
+        records, extra = export.build(fields, history, ndvi, snow, heavy_cells, cell_of, classes, traits, threshold)
         fallow = fallow_check(extra["statuses"], history)
         moved = Counter()
         for b, r in zip(base, records):
@@ -114,22 +114,25 @@ def plan_checks(records):
     }
 
 
-def rain_season_check():
-    df = power.daily(config.STUDY_BOX, list(config.YEARS)[-1])
-    weekly = power.weekly_rain(df)
-    threshold = np.nanquantile(weekly.values, 1 - config.HEAVY_RAIN_TOP_SHARE)
-    by_week = (weekly.values >= threshold).sum(axis=0)
+def rain_season_check(cells):
+    """Do heavy-rain weeks fall in the wet season? Pooled over the grid cells."""
+    by_week = np.zeros(WEEKS)
+    for c in cells:
+        weekly = power.weekly_rain(power.daily(c["lon"], c["lat"], list(config.YEARS)[-1]))
+        by_week += (weekly.values >= c["heavy_mm"]).sum(axis=0)
     # Week w starts on day 7w+1; day 305 is 1 November, day 90 is 31 March.
     wet = np.array([(w * 7 + 1 >= 305) or (w * 7 + 1 <= 90) for w in range(WEEKS)])
     return {
-        "since": int(weekly.index.min()),
+        "since": power.START_YEAR,
+        "cells": len(cells),
         "heavy_weeks": int(by_week.sum()),
         "share_november_to_march": round(float(by_week[wet].sum() / by_week.sum()), 3),
     }
 
 
-def run(fields, history, ndvi, snow, heavy, classes, records, extra, looks):
+def run(fields, history, ndvi, snow, cells, cell_of, classes, records, extra, looks):
     traits = export.load_traits()
+    heavy_cells = np.stack([c["heavy"] for c in cells])
     statuses = extra["statuses"]
     states = Counter(statuses.reshape(-1).tolist())
     total = statuses.size
@@ -141,9 +144,9 @@ def run(fields, history, ndvi, snow, heavy, classes, records, extra, looks):
             "note": "Needs a person to compare 20 fields against NAIP aerial photos from the same summer.",
         },
         "fallow_check": fallow_check(statuses, history),
-        "threshold_test": threshold_test(fields, history, ndvi, snow, heavy, classes, traits, records, statuses),
+        "threshold_test": threshold_test(fields, history, ndvi, snow, heavy_cells, cell_of, classes, traits, records, statuses),
         "plan_checks": plan_checks(records),
-        "rain_season_check": rain_season_check(),
+        "rain_season_check": rain_season_check(cells),
         "week_states": {
             "seen": round((states[score.GREEN] + states[score.BARE]) / total, 3),
             "likely": round((states[score.LIKELY_GREEN] + states[score.LIKELY_BARE]) / total, 3),
