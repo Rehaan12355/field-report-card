@@ -1068,3 +1068,203 @@ table.narrow th {
     transition: none !important;
   }
 }
+
+/* ---------- The field's story (plays when a field opens) ---------- */
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.story {
+  display: grid;
+  gap: 16px;
+  min-height: 100%;
+  grid-template-rows: auto auto auto auto 1fr auto;
+}
+
+.story .card-top {
+  margin-bottom: 0;
+}
+
+.story-bar {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+}
+
+.story-bar span {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.story-bar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.story-grades {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 76px;
+}
+
+.story-grades .grade-block {
+  animation: pop 0.6s var(--spring) both;
+}
+
+.story-grades .grade-block:last-child:not(:first-child) {
+  animation-delay: 0.5s;
+}
+
+.story-to {
+  font-size: var(--t-s);
+  color: var(--muted);
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.story-caption {
+  font-size: var(--t-xl);
+  font-weight: 550;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  min-height: 7.5em;
+}
+
+.story-caption.in {
+  animation: rise 0.6s var(--spring) both;
+}
+
+.story-visual {
+  align-self: start;
+}
+
+.story-crops,
+.story-plans {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.story-crops li {
+  display: grid;
+  grid-template-columns: 14px 5ch 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--well);
+  border-radius: 10px;
+  animation: rise 0.5s var(--spring) both;
+}
+
+.story-crops i {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(24, 24, 27, 0.2);
+}
+
+.story-crops .num {
+  color: var(--muted);
+  font-size: var(--t-s);
+}
+
+.story-crops b {
+  font-weight: 600;
+}
+
+.story-crops li:nth-child(2) { animation-delay: 0.35s; }
+.story-crops li:nth-child(3) { animation-delay: 0.7s; }
+.story-crops li:nth-child(4) { animation-delay: 1.05s; }
+.story-crops li:nth-child(5) { animation-delay: 1.4s; }
+.story-crops li:nth-child(6) { animation-delay: 1.75s; }
+.story-crops li:nth-child(n + 7) { animation-delay: 2.1s; }
+
+.story-plans li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--well);
+  border-radius: 10px;
+  font-weight: 600;
+  animation: rise 0.5s var(--spring) both;
+}
+
+.story-plans li:nth-child(2) { animation-delay: 0.3s; }
+.story-plans li:nth-child(3) { animation-delay: 0.6s; }
+
+.story-plans small {
+  display: block;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* Years wipe in one after another. */
+.story[data-mode="reveal"] .ribbon-row[data-yi] svg {
+  animation: wipe 0.7s ease-out both;
+}
+
+.story[data-mode="reveal"] .ribbon-row[data-yi="1"] svg { animation-delay: 0.6s; }
+.story[data-mode="reveal"] .ribbon-row[data-yi="2"] svg { animation-delay: 1.2s; }
+.story[data-mode="reveal"] .ribbon-row[data-yi="3"] svg { animation-delay: 1.8s; }
+.story[data-mode="reveal"] .ribbon-row[data-yi="4"] svg { animation-delay: 2.4s; }
+.story[data-mode="reveal"] .ribbon-row[data-yi="5"] svg { animation-delay: 3s; }
+.story[data-mode="reveal"] .ribbon-row[data-yi="6"] svg { animation-delay: 3.6s; }
+
+@keyframes wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Dim everything except bare weeks under heavy rain. */
+.story .ribbon rect.wk {
+  transition: fill 0.4s, opacity 0.5s;
+}
+
+.story[data-mode="exposed"] .ribbon rect.wk:not(.wk-exposed):not(.wk-exposed-likely) {
+  opacity: 0.18;
+}
+
+.story-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.story-controls .button {
+  min-height: 40px;
+  margin-left: auto;
+}
+
+.story-controls .button-quiet {
+  margin-left: 0;
+}
+
+.story-controls [aria-pressed="true"] {
+  background: var(--accent-tint);
+  border-color: var(--accent);
+  color: var(--accent);
+}

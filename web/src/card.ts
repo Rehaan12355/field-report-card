@@ -1,5 +1,6 @@
 import { greennessCurve, ribbon, ribbonKey } from "./charts";
 import { planDetail, planTable, priorities, sliders } from "./plans";
+import { playStory, stopStory } from "./story";
 import type { Cell, Field, Measure, Meta, Plan } from "./types";
 
 type Handlers = {
@@ -70,7 +71,10 @@ function render(animate: boolean): void {
   el().innerHTML = `<div class="${animate ? "rise" : ""}">
     <div class="card-top">
       <p class="note">${Math.round(field.ha)} hectares, ${latest.name.toLowerCase()} in ${lastYear}</p>
-      <button type="button" class="button button-quiet" data-close>All fields</button>
+      <span class="card-actions">
+        <button type="button" class="button button-quiet" data-replay>Play the story</button>
+        <button type="button" class="button button-quiet" data-close>All fields</button>
+      </span>
     </div>
     <header class="grade-head">
       <div class="grade-block grade-${plan.grade}" aria-label="Grade ${plan.grade}">${plan.grade}</div>
@@ -111,15 +115,25 @@ function render(animate: boolean): void {
 }
 
 export function showLoading(): void {
+  stopStory();
   current = null;
   el().innerHTML = `<div class="skeleton" aria-label="Loading this field">
     <div class="sk sk-title"></div><div class="sk sk-line"></div><div class="sk sk-line short"></div>
     <div class="sk sk-block"></div><div class="sk sk-block"></div></div>`;
 }
 
+function story(): void {
+  if (!current) return;
+  const { field, meta } = current;
+  current.selected = "current";
+  playStory(el(), field, meta, () => render(true));
+}
+
 export function showField(field: Field, meta: Meta): void {
   current = { field, meta, selected: "current" };
-  render(true);
+  // The story plays first, unless the visitor has asked for less motion.
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) render(true);
+  else story();
 }
 
 /** A four-cell ribbon set inline in the headline. */
@@ -128,6 +142,7 @@ const MINI_RIBBON = `<svg viewBox="0 0 58 20" aria-hidden="true">
   <rect class="wk-exposed" x="30" width="12" height="20" rx="3"/><rect class="wk-green" x="45" width="12" height="20" rx="3"/></svg>`;
 
 export function showIntro(meta: Meta): void {
+  stopStory();
   current = null;
   const total = Object.values(meta.grades).reduce((a, b) => a + b, 0);
   const bars = Object.entries(meta.grades)
@@ -168,6 +183,7 @@ export function showIntro(meta: Meta): void {
 }
 
 export function showError(message: string): void {
+  stopStory();
   current = null;
   el().innerHTML = `<h2>The report card did not load</h2><p>${message}</p>
     <p><button type="button" class="button button-quiet" data-close>Back to all fields</button></p>`;
@@ -178,6 +194,7 @@ export function initCard(h: Handlers): void {
   el().addEventListener("click", (e) => {
     const target = e.target as HTMLElement;
     if (target.closest("[data-close]")) return handlers.onClose();
+    if (target.closest("[data-replay]")) return story();
     if (target.closest("[data-example]")) return handlers.onExample();
     const grade = target.closest<HTMLElement>("[data-grade]");
     if (grade) {

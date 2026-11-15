@@ -16,7 +16,7 @@ const STATE_WORDS: Record<string, string> = {
 };
 
 /** CSS class for one week cell: its state, and whether heavy rain fell on bare soil. */
-function cellClass(state: string, heavy: boolean): string {
+export function cellClass(state: string, heavy: boolean): string {
   switch (state) {
     case "B":
       return heavy ? "wk-exposed" : "wk-bare";
@@ -71,12 +71,12 @@ export function ribbon(field: Field, plan: Plan, meta: Meta): string {
           const heavy = cell.heavy[yi][w] === "1";
           const rain = cell.rain[yi][w];
           const tip = `Week of ${weekStart(year, w)}: ${STATE_WORDS[s] ?? s}${heavy ? `. Heavy rain, ${rain} mm` : ""}`;
-          return `<rect class="${cellClass(s, heavy)}" x="${w * cw + 0.5}" y="4" width="${cw - 1}" height="16" rx="1.5"><title>${tip}</title></rect>${
+          return `<rect class="wk ${cellClass(s, heavy)}" x="${w * cw + 0.5}" y="4" width="${cw - 1}" height="16" rx="1.5"><title>${tip}</title></rect>${
             heavy ? `<rect class="wk-rain" x="${w * cw + 0.5}" y="0" width="${cw - 1}" height="3"/>` : ""
           }`;
         })
         .join("");
-      return `<div class="ribbon-row${swapped ? " is-swapped" : ""}">
+      return `<div class="ribbon-row${swapped ? " is-swapped" : ""}" data-yi="${yi}">
         <span class="ribbon-year">${year}</span>
         <span class="ribbon-crop"><i style="background:${crop.color}"></i>${crop.name}</span>
         <svg viewBox="0 0 ${WEEKS * cw} 20" preserveAspectRatio="none" role="img"
@@ -144,4 +144,19 @@ export function greennessCurve(field: Field, meta: Meta): string {
     <line class="curve-threshold" x1="0" x2="${w}" y1="${ty}" y2="${ty}"/>
     <path class="curve-line" d="${path}"/><g class="curve-dots">${dots}</g>
   </svg>`;
+}
+
+/** Recolour a ribbon already on the page to show another plan, so the cells
+ *  change in place instead of being redrawn. */
+export function recolorRibbon(root: HTMLElement, field: Field, plan: Plan, meta: Meta): void {
+  const cell = meta.cells[field.cell];
+  root.querySelectorAll<HTMLElement>(".ribbon-row[data-yi]").forEach((row) => {
+    const yi = Number(row.dataset.yi);
+    const crop = meta.crops[String(plan.crops[yi])];
+    row.classList.toggle("is-swapped", plan.swap_year === yi);
+    (row.querySelector(".ribbon-crop") as HTMLElement).innerHTML = `<i style="background:${crop.color}"></i>${crop.name}`;
+    row.querySelectorAll("rect.wk").forEach((rect, w) => {
+      rect.setAttribute("class", `wk ${cellClass(plan.weeks[yi][w], cell.heavy[yi][w] === "1")}`);
+    });
+  });
 }

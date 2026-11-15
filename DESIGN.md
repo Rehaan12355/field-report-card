@@ -79,8 +79,12 @@ No purple, no neon, no gradients, no pure black.
 
 - Easing is a soft spring curve, cubic-bezier(0.22, 1, 0.36, 1), 350 to
   500ms. Only transform and opacity animate, plus fill on ribbon cells.
-- One orchestrated moment: when a field opens, the card's sections rise in
-  with a 50ms stagger.
+- One orchestrated moment: when a field opens, its story plays in the card.
+  Seven captioned scenes, about 40 seconds: the crops, every week seen from
+  space, the weeks under heavy rain, the grade, then each plan recolouring
+  the ribbon in place. A segmented bar shows progress; Pause, Read aloud
+  (the browser's own voice, off by default) and Skip are always in reach.
+  The report card follows, with a button to play the story again.
 - Picking a plan recolours the ribbon cells and the grade block in place.
 - One perpetual micro-loop: a slow pulse on the dot beside the example-field
   button. The skeleton shimmer runs only while loading.
